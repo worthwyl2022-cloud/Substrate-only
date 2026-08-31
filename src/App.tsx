@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Network, Download, Briefcase, Zap, Cpu, ShieldAlert, Code2, Layers, CheckCircle2, Atom, Radio } from 'lucide-react';
+import { Network, Download, Briefcase, Zap, Cpu, ShieldAlert, Code2, Layers, CheckCircle2, Atom, Radio, Scale } from 'lucide-react';
 import { SYSTEM_MODULES } from './data';
 import { ModuleCard } from './components/ModuleCard';
 import { SystemStatus } from './components/SystemStatus';
@@ -15,10 +15,11 @@ import { ResonanceFieldCanvas } from './components/ResonanceFieldCanvas';
 import { CreativeNervousSystem } from './components/CreativeNervousSystem';
 import { HybridContradictionBenchmark } from './components/HybridContradictionBenchmark';
 import { CryptographicReceiptVerifier } from './components/CryptographicReceiptVerifier';
+import { ComprehensiveStressBenchmark } from './components/ComprehensiveStressBenchmark';
 import { telemetryStore } from './store';
 
 export default function App() {
-  const [mainView, setMainView] = useState<'GOVERNANCE' | 'CREATIVE_CORE' | 'ARENA' | 'ARCHITECTURE' | 'DATA_ROOM' | 'DIAGNOSTICS'>('GOVERNANCE');
+  const [mainView, setMainView] = useState<'GOVERNANCE' | 'CREATIVE_CORE' | 'ARENA' | 'BENCHMARK_50' | 'ARCHITECTURE' | 'DATA_ROOM' | 'DIAGNOSTICS'>('GOVERNANCE');
 
   const handleDownloadDiagnostics = () => {
     const payload = {
@@ -123,6 +124,16 @@ export default function App() {
               <ShieldAlert size={14} /> <span>3. Adversarial Arena</span>
             </button>
             <button
+              onClick={() => setMainView('BENCHMARK_50')}
+              className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                mainView === 'BENCHMARK_50'
+                  ? 'bg-indigo-600 text-white font-semibold shadow-md shadow-indigo-600/20'
+                  : 'text-indigo-400/90 hover:text-indigo-300 hover:bg-neutral-800/50'
+              }`}
+            >
+              <Scale size={14} className="animate-pulse" /> <span>4. 50-Variant Stress Suite</span>
+            </button>
+            <button
               onClick={() => setMainView('ARCHITECTURE')}
               className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
                 mainView === 'ARCHITECTURE'
@@ -130,7 +141,7 @@ export default function App() {
                   : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50'
               }`}
             >
-              <Code2 size={14} /> <span>4. Kotlin Core & Field</span>
+              <Code2 size={14} /> <span>5. Kotlin Core & Field</span>
             </button>
             <button
               onClick={() => setMainView('DATA_ROOM')}
@@ -140,7 +151,7 @@ export default function App() {
                   : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50'
               }`}
             >
-              <Briefcase size={14} /> <span>5. Data Room</span>
+              <Briefcase size={14} /> <span>6. Data Room</span>
             </button>
             <button
               onClick={() => setMainView('DIAGNOSTICS')}
@@ -150,7 +161,7 @@ export default function App() {
                   : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50'
               }`}
             >
-              <Cpu size={14} /> <span>6. Telemetry</span>
+              <Cpu size={14} /> <span>7. Telemetry</span>
             </button>
           </div>
 
@@ -195,6 +206,15 @@ export default function App() {
               </section>
               <section>
                 <HybridContradictionBenchmark />
+              </section>
+            </div>
+          )}
+
+          {/* VIEW 4: 50-VARIANT DUE DILIGENCE STRESS BENCHMARK */}
+          {mainView === 'BENCHMARK_50' && (
+            <div className="space-y-12">
+              <section>
+                <ComprehensiveStressBenchmark />
               </section>
             </div>
           )}
