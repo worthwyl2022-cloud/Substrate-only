@@ -1,0 +1,6 @@
+{
+  "name": "CognitiveCore",
+  "description": "Acquisition-grade visualization and control dashboard for the CognitiveCore AI substrate system.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
