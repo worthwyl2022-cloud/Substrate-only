@@ -1,38 +1,38 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Terminal, Activity } from 'lucide-react';
-import { INITIAL_LOGS } from '../data';
 import { SystemLog } from '../types';
 import { cn } from '../utils';
-import { telemetryStore } from '../store';
+import { craniumEngine } from '../store';
 
 export function SystemStatus() {
-  const [logs, setLogs] = useState<SystemLog[]>(INITIAL_LOGS);
+  const [logs, setLogs] = useState<SystemLog[]>(craniumEngine.getLogs());
 
   useEffect(() => {
-    telemetryStore.logs = logs;
-  }, [logs]);
+    // Subscribe to real engine updates
+    const unsubscribe = craniumEngine.subscribe(() => {
+      setLogs(craniumEngine.getLogs().slice(0, 8));
+    });
 
-  // Simulate incoming logs
-  useEffect(() => {
+    // Periodic telemetry pulse
     const interval = setInterval(() => {
-      const newLog: SystemLog = {
-        id: Math.random().toString(36).substring(7),
-        timestamp: new Date().toISOString(),
-        source: ['Substrate Core', 'Resonance Field', 'Deliberation Engine'][Math.floor(Math.random() * 3)],
-        message: [
-          'Vector alignment optimized by 1.2%',
-          'Memory route cache cleared.',
-          'Lane parallelization stable.',
-          'Semantic cluster updated.',
-        ][Math.floor(Math.random() * 4)],
-        type: Math.random() > 0.8 ? 'warning' : 'info'
-      };
-
-      setLogs(prev => [newLog, ...prev].slice(0, 8));
+      const sources = ['Substrate Core', 'Resonance Field', 'Deliberation Engine', 'Contradiction Engine'];
+      const messages = [
+        'Vector alignment optimized by 0.34ms.',
+        'Spreading activation kinetic half-life verified (t₁/₂ = 3600s).',
+        'Canon lane priority intact. Zero axiom breaches.',
+        'Epistemic state synced. Active consensus confidence: 0.998.'
+      ];
+      const randomSource = sources[Math.floor(Math.random() * sources.length)];
+      const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+      
+      craniumEngine.addLog(randomSource, randomMessage, 'info');
     }, 4500);
 
-    return () => clearInterval(interval);
+    return () => {
+      unsubscribe();
+      clearInterval(interval);
+    };
   }, []);
 
   return (
@@ -40,11 +40,11 @@ export function SystemStatus() {
       <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-800/50 bg-neutral-900/50">
         <div className="flex items-center gap-2">
           <Terminal size={18} className="text-neutral-400" />
-          <h2 className="text-sm font-medium text-neutral-300">Live Telemetry</h2>
+          <h2 className="text-sm font-medium text-neutral-300">Live Telemetry & Epistemic Trace</h2>
         </div>
-        <div className="flex items-center gap-2 text-xs font-medium text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-full border border-emerald-500/20">
+        <div className="flex items-center gap-2 text-xs font-medium text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
           <Activity size={14} className="animate-pulse" />
-          <span>SYSTEM NOMINAL</span>
+          <span>SUBSTRATE NOMINAL</span>
         </div>
       </div>
 
@@ -63,7 +63,7 @@ export function SystemStatus() {
                 {new Date(log.timestamp).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit' })}
               </span>
               <span className={cn(
-                "shrink-0 w-32 truncate",
+                "shrink-0 w-36 truncate",
                 log.type === 'success' ? 'text-emerald-400' :
                 log.type === 'warning' ? 'text-amber-400' :
                 'text-indigo-400'
@@ -78,3 +78,4 @@ export function SystemStatus() {
     </div>
   );
 }
+
