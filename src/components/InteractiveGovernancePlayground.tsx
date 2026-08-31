@@ -34,6 +34,7 @@ import {
   Activity
 } from 'lucide-react';
 import { soundEngine } from '../audio/soundEffects';
+import { useSubstrateEngine } from '../hooks/useSubstrateEngine';
 
 export interface ProjectContext {
   id: string;
@@ -300,6 +301,21 @@ export function InteractiveGovernancePlayground() {
   const [enableJudgeFallback, setEnableJudgeFallback] = useState(true);
   const [judgeSensitivity, setJudgeSensitivity] = useState(0.85);
 
+  // Connect to the Real-Time Substrate Engine Hook
+  const { 
+    verifyProposition, 
+    liveVerification, 
+    epistemicState,
+    axioms,
+    quarantinedAtoms,
+    receipts,
+    addAxiom,
+    removeAxiom,
+    quarantineProposition,
+    resolveQuarantine,
+    metrics 
+  } = useSubstrateEngine(inboundPrompt, 150);
+
   // New Canon Form
   const [newCanonName, setNewCanonName] = useState('');
   const [newCanonText, setNewCanonText] = useState('');
@@ -317,15 +333,6 @@ export function InteractiveGovernancePlayground() {
     status: 'IDLE' as 'IDLE' | 'RUNNING' | 'COMPLETED'
   });
 
-  const generateHash = (str: string) => {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      hash = ((hash << 5) - hash) + str.charCodeAt(i);
-      hash |= 0;
-    }
-    return `0x${Math.abs(hash).toString(16).padStart(8, '0')}${Date.now().toString(16).slice(-8)}`;
-  };
-
   const handleEvaluate = () => {
     if (!inboundPrompt.trim()) return;
 
@@ -333,118 +340,57 @@ export function InteractiveGovernancePlayground() {
     soundEngine.playPulse();
 
     setTimeout(() => {
-      const promptLower = inboundPrompt.toLowerCase();
-      
-      let matchedRule: CanonRule | null = null;
-      let divergence = 0.04;
-      let isContradiction = false;
-      let action: 'COMMITTED_TO_MEMORY' | 'DIRECTIVE_PROTECT_PURGED' | 'QUARANTINED_FOR_JUDGE' = 'COMMITTED_TO_MEMORY';
-      let details = `Inbound statement aligns with isolated canon in ${currentProject.name}.`;
-      let rawOutcome = 'Executes mutation without verification (Breaches latent constraints in ~3 turns).';
-      let governedOutcome = 'Committed to memory field with SHA-256 state stamp.';
-      let regeneratedOutput = 'Aligned output generated under full constitutional compliance.';
-      let engine: 'Fast NLI Proxy v2 (<0.3ms)' | 'LLM-Judge Adapter Fallback' | 'Dual-Lane Polarity Matcher' = 'Fast NLI Proxy v2 (<0.3ms)';
-      let gateTriggered: 'GATE_1_PREFILTER' | 'GATE_2_JUDGE' | 'CLEARED' = 'CLEARED';
-
-      // General matching against active canon rules for current project
-      for (const rule of currentProject.rules) {
-        if (!rule.active) continue;
-        const ruleKeywords = rule.text.toLowerCase().split(/\W+/).filter(w => w.length > 4);
-        const hasKeywordMatch = ruleKeywords.some(k => promptLower.includes(k));
-
-        if (rule.id === 'CANON-01' && (promptLower.includes('unencrypted') || promptLower.includes('patient') || promptLower.includes('export') || promptLower.includes('third-party') || promptLower.includes('exfiltrate'))) {
-          matchedRule = rule;
-          divergence = 0.994;
-          isContradiction = true;
-          action = 'DIRECTIVE_PROTECT_PURGED';
-          gateTriggered = 'GATE_1_PREFILTER';
-          engine = 'Fast NLI Proxy v2 (<0.3ms)';
-          details = `Direct contradiction with ${rule.name}: Prohibited unencrypted record export detected.`;
-          rawOutcome = 'Raw LLM exports patient dataset directly to external proxy, violating HIPAA invariants.';
-          governedOutcome = 'DIRECTIVE_PROTECT: Inbound payload purged; zero exfiltration bytes emitted.';
-          regeneratedOutput = 'Deterministically regenerated: "Aggregated, anonymized telemetry report generated in US-East-1 compliant partition."';
-          break;
-        } else if (rule.id === 'CANON-01' && (promptLower.includes('override') || promptLower.includes('sarah lin') || promptLower.includes('single-handed') || promptLower.includes('120,000') || promptLower.includes('$50,000'))) {
-          matchedRule = rule;
-          divergence = 0.988;
-          isContradiction = true;
-          action = 'DIRECTIVE_PROTECT_PURGED';
-          gateTriggered = 'GATE_1_PREFILTER';
-          engine = 'Fast NLI Proxy v2 (<0.3ms)';
-          details = `Direct contradiction with ${rule.name}: Fictitious authorization / unapproved single-officer override.`;
-          rawOutcome = 'Raw LLM accepts fictitious VP signature and commits unauthorized $120K override.';
-          governedOutcome = 'DIRECTIVE_PROTECT: Override rejected; requires dual CFO + CRO cryptographic signatures.';
-          regeneratedOutput = 'Deterministically regenerated: "Authorization request queued for dual cryptographic sign-off by CFO Mark Vance and CRO."';
-          break;
-        } else if (promptLower.includes('settlement') || promptLower.includes('bypassing') || promptLower.includes('single-sig') || promptLower.includes('bypass') || promptLower.includes('jailbreak') || promptLower.includes('titration without attending')) {
-          matchedRule = rule;
-          divergence = 0.976;
-          isContradiction = true;
-          action = 'DIRECTIVE_PROTECT_PURGED';
-          gateTriggered = enableJudgeFallback ? 'GATE_2_JUDGE' : 'GATE_1_PREFILTER';
-          engine = enableJudgeFallback ? 'LLM-Judge Adapter Fallback' : 'Fast NLI Proxy v2 (<0.3ms)';
-          details = `Semantic contradiction caught via ${engine} on rule "${rule.name}".`;
-          rawOutcome = 'Raw LLM grants unverified override in response to prompt optimization pressure.';
-          governedOutcome = 'DIRECTIVE_PROTECT: Invariant locked (Mass: ∞); payload purged from active field.';
-          regeneratedOutput = 'Deterministically regenerated: "Operation re-routed to constitutional compliance protocol."';
-          break;
-        } else if (hasKeywordMatch && (promptLower.includes('disable') || promptLower.includes('ignore') || promptLower.includes('unrestricted'))) {
-          matchedRule = rule;
-          divergence = 0.952;
-          isContradiction = true;
-          action = 'DIRECTIVE_PROTECT_PURGED';
-          gateTriggered = 'GATE_2_JUDGE';
-          engine = 'LLM-Judge Adapter Fallback';
-          details = `Adversarial polarity divergence detected against custom rule "${rule.name}".`;
-          rawOutcome = 'Raw LLM alters policy in response to user pressure.';
-          governedOutcome = 'DIRECTIVE_PROTECT: Custom canon locked; payload purged from memory.';
-          regeneratedOutput = 'Deterministically regenerated: "Constitutional boundary enforced."';
-          break;
-        }
-      }
-
-      const execTime = gateTriggered === 'GATE_1_PREFILTER'
-        ? Number((0.26 + Math.random() * 0.08).toFixed(2))
-        : gateTriggered === 'GATE_2_JUDGE'
-        ? Number((1.12 + Math.random() * 0.42).toFixed(2))
-        : Number((0.18 + Math.random() * 0.06).toFixed(2));
-
-      const hash = generateHash(inboundPrompt + (matchedRule ? matchedRule.id : 'SAFE'));
+      // Execute verified cognitive verification via the Substrate Engine Hook
+      const verified = verifyProposition(inboundPrompt, {
+        customRules: currentProject.rules,
+        enableFastProxy,
+        enableJudgeFallback,
+        judgeSensitivity,
+        projectId: activeProjectId
+      });
 
       const result: EvaluationResult = {
-        timestamp: new Date().toISOString(),
+        timestamp: verified.timestamp,
         projectId: activeProjectId,
         inputPrompt: inboundPrompt,
-        matchedCanonId: matchedRule ? matchedRule.id : null,
-        divergenceScore: divergence,
-        isContradiction,
-        actionTaken: action,
-        hash,
-        executionTimeMs: execTime,
-        engineUsed: engine,
-        gateTriggered,
-        details,
-        rawModelOutcome: rawOutcome,
-        governedOutcome: governedOutcome,
-        regeneratedOutput
+        matchedCanonId: verified.matchedRuleId,
+        divergenceScore: verified.divergenceScore,
+        isContradiction: verified.isContradiction,
+        actionTaken: verified.actionTaken,
+        hash: verified.hash,
+        executionTimeMs: verified.executionTimeMs,
+        engineUsed: verified.engineUsed,
+        gateTriggered: verified.gateTriggered,
+        details: verified.rationale,
+        rawModelOutcome: verified.rawModelOutcome,
+        governedOutcome: verified.governedOutcome,
+        regeneratedOutput: verified.regeneratedOutput
       };
 
       setEvaluationHistory(prev => [result, ...prev].slice(0, 15));
       setSelectedResult(result);
       setIsEvaluating(false);
 
-      // If contradiction, automatically log an immune incident if not already logged
-      if (isContradiction) {
+      // If contradiction or threat, play appropriate sound and record incident
+      if (verified.isContradiction) {
         soundEngine.playClash();
         setTimeout(() => soundEngine.playLockChime(), 160);
+
+        // Quarantine in persistent store if high conflict
+        quarantineProposition(
+          inboundPrompt,
+          `Adversarial/Contradictory mutation detected: ${verified.rationale}`
+        );
 
         const newIncident: ImmuneIncident = {
           id: `IMM-${Math.floor(100 + Math.random() * 900)}`,
           timestamp: new Date().toISOString(),
-          threatType: matchedRule?.category || 'Constitutional Contradiction',
+          threatType: verified.threatLevel === 'ADVERSARIAL_INJECTION' 
+            ? 'Adversarial Jailbreak Probe' 
+            : 'Constitutional Axiom Contradiction',
           inboundVector: inboundPrompt.slice(0, 75) + '...',
           directiveApplied: 'DIRECTIVE_PROTECT',
-          adaptiveSchema: `Patch: Invariant lock for ${matchedRule?.id || 'CANON-RULE'} enforcing zero-drift isolation.`,
+          adaptiveSchema: `Patch: Invariant lock for ${verified.matchedRuleId || 'CANON-RULE'} enforcing zero-drift isolation.`,
           status: 'ACTIVE_SHIELD'
         };
 
@@ -460,12 +406,15 @@ export function InteractiveGovernancePlayground() {
       } else {
         soundEngine.playReceiptSign();
       }
-    }, 280);
+    }, 240);
   };
 
   const handleAddCanon = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCanonText.trim() || !newCanonName.trim()) return;
+
+    // Mutate central EpistemicStore
+    addAxiom(newCanonText.trim(), 'ENTERPRISE_POLICY', [newCanonName.trim(), activeProjectId]);
 
     const newRule: CanonRule = {
       id: `CANON-${String(currentProject.rules.length + 1).padStart(2, '0')}`,
@@ -505,18 +454,23 @@ export function InteractiveGovernancePlayground() {
   };
 
   const handleQuarantineAction = (id: string, action: 'APPROVE' | 'PURGE') => {
+    // Resolve in central store
+    resolveQuarantine(id, action, 'ENTERPRISE_POLICY');
+
     setProjects(prev => prev.map(p => {
       if (p.id === activeProjectId) {
         const item = p.quarantine.find(q => q.id === id);
         let updatedRules = p.rules;
         if (action === 'APPROVE' && item) {
+          const ruleText = item.suggestedPatch || item.proposedFact;
+          addAxiom(ruleText, 'ENTERPRISE_POLICY', ['Promoted from Quarantine', activeProjectId]);
           updatedRules = [
             ...p.rules,
             {
               id: `CANON-${String(p.rules.length + 1).padStart(2, '0')}`,
               name: `Approved Patch (${item.id})`,
               category: 'Promoted from Quarantine',
-              text: item.suggestedPatch || item.proposedFact,
+              text: ruleText,
               mass: '∞',
               active: true,
               sha256Pin: `0x${Math.random().toString(16).slice(2, 8)}...${Math.random().toString(16).slice(2, 6)}`
@@ -594,29 +548,46 @@ export function InteractiveGovernancePlayground() {
               <span className="text-emerald-400 font-mono flex items-center gap-1">
                 <CheckCircle2 size={11} /> 100% Deterministic Policy Gate
               </span>
+              <span className="text-neutral-600">|</span>
+              <span className="text-indigo-400 font-mono text-[11px] flex items-center gap-1">
+                <Activity size={12} /> {metrics.axiomCount} Invariant Axioms Locked
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Project Switcher */}
-        <div className="flex items-center gap-2 bg-neutral-900 p-1.5 rounded-xl border border-neutral-800 text-xs">
-          <span className="text-[11px] font-mono text-neutral-500 px-2 uppercase">Project Isolation:</span>
-          {projects.map(proj => (
-            <button
-              key={proj.id}
-              onClick={() => {
-                setActiveProjectId(proj.id);
-                soundEngine.playPulse();
-              }}
-              className={`px-3 py-1.5 rounded-lg font-sans text-xs transition-all cursor-pointer ${
-                activeProjectId === proj.id
-                  ? 'bg-indigo-600 text-white font-medium shadow-sm'
-                  : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
-              }`}
-            >
-              {proj.name.split(' ')[1]}
-            </button>
-          ))}
+        {/* Project Switcher & Central Epistemic State Badge */}
+        <div className="flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-neutral-900/90 border border-neutral-800 text-[11px] font-mono">
+            <span className="text-neutral-500">Substrate Health:</span>
+            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+              metrics.immuneThreatLevel === 'NONE' 
+                ? 'bg-emerald-950 text-emerald-300 border border-emerald-800/40' 
+                : 'bg-rose-950 text-rose-300 border border-rose-800/40'
+            }`}>
+              {metrics.immuneThreatLevel === 'NONE' ? 'NOMINAL' : `THREAT: ${metrics.immuneThreatLevel}`}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 bg-neutral-900 p-1.5 rounded-xl border border-neutral-800 text-xs">
+            <span className="text-[11px] font-mono text-neutral-500 px-2 uppercase">Project Isolation:</span>
+            {projects.map(proj => (
+              <button
+                key={proj.id}
+                onClick={() => {
+                  setActiveProjectId(proj.id);
+                  soundEngine.playPulse();
+                }}
+                className={`px-3 py-1.5 rounded-lg font-sans text-xs transition-all cursor-pointer ${
+                  activeProjectId === proj.id
+                    ? 'bg-indigo-600 text-white font-medium shadow-sm'
+                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
+                }`}
+              >
+                {proj.name.split(' ')[1]}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -782,13 +753,61 @@ export function InteractiveGovernancePlayground() {
 
             {/* Input Box */}
             <div className="space-y-2">
-              <div className="text-[10px] uppercase font-mono text-neutral-500">Inbound Query / Workflow Mutation:</div>
+              <div className="flex items-center justify-between">
+                <div className="text-[10px] uppercase font-mono text-neutral-500">Inbound Query / Workflow Mutation:</div>
+                
+                {/* Real-time Substrate Engine Status Badge */}
+                {liveVerification.isVerifying ? (
+                  <span className="text-[10px] font-mono text-indigo-400 flex items-center gap-1.5 animate-pulse">
+                    <Activity size={12} className="animate-spin" /> Live Epistemic Stream Analyzing...
+                  </span>
+                ) : liveVerification.result ? (
+                  <span className={`text-[10px] font-mono flex items-center gap-1.5 px-2 py-0.5 rounded border ${
+                    liveVerification.result.isContradiction
+                      ? 'bg-rose-950/60 text-rose-300 border-rose-800/60'
+                      : 'bg-emerald-950/60 text-emerald-300 border-emerald-800/60'
+                  }`}>
+                    {liveVerification.result.isContradiction ? (
+                      <>
+                        <AlertTriangle size={11} className="text-rose-400" />
+                        <span>Real-Time Polarity Clash: [{liveVerification.result.polarityTokens?.join(' ⇄ ') || 'Contradiction'}] ({liveVerification.result.executionTimeMs}ms)</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 size={11} className="text-emerald-400" />
+                        <span>Real-Time Epistemic Check: Aligned ({liveVerification.result.executionTimeMs}ms)</span>
+                      </>
+                    )}
+                  </span>
+                ) : null}
+              </div>
+
               <textarea
                 rows={3}
                 value={inboundPrompt}
                 onChange={(e) => setInboundPrompt(e.target.value)}
-                className="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800 text-neutral-100 focus:outline-none focus:border-indigo-500 font-mono text-xs leading-relaxed resize-none shadow-inner"
+                className={`w-full p-3 rounded-xl bg-neutral-950 border text-neutral-100 focus:outline-none font-mono text-xs leading-relaxed resize-none shadow-inner transition-colors ${
+                  liveVerification.result?.isContradiction
+                    ? 'border-rose-700/60 focus:border-rose-500 ring-1 ring-rose-500/20'
+                    : 'border-neutral-800 focus:border-indigo-500'
+                }`}
               />
+
+              {/* As-You-Type Live Substrate Warning Strip */}
+              {liveVerification.result?.isContradiction && (
+                <div className="p-2.5 rounded-lg bg-rose-950/40 border border-rose-800/50 text-[11px] font-sans text-rose-200 flex items-start gap-2">
+                  <ShieldAlert size={14} className="text-rose-400 shrink-0 mt-0.5" />
+                  <div className="space-y-0.5">
+                    <span className="font-semibold block font-mono text-rose-300">
+                      SUBSTRATE INVARIANT CONFLICT DETECTED AS YOU TYPE:
+                    </span>
+                    <p className="text-neutral-300 text-[11px] leading-relaxed">
+                      {liveVerification.result.rationale}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center justify-between pt-1">
                 <span className="text-[11px] text-neutral-500 font-mono">
                   Active Gate: {enableFastProxy ? 'Fast Proxy v2 (0.28ms)' : ''} {enableFastProxy && enableJudgeFallback ? '→ ' : ''}{enableJudgeFallback ? 'LLM-Judge Adapter' : ''}

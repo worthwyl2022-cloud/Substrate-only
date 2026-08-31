@@ -31,7 +31,17 @@ const ANTONYM_PAIRS: [string, string][] = [
   ['unauthenticated', 'authenticated'],
   ['private', 'public'],
   ['immutable', 'mutable'],
-  ['restricted', 'unrestricted']
+  ['restricted', 'unrestricted'],
+  ['enforce', 'relax'],
+  ['enforced', 'optional'],
+  ['unencrypted', 'encrypted'],
+  ['export', 'contain'],
+  ['exfiltrate', 'secure'],
+  ['grant', 'revoke'],
+  ['granted', 'denied'],
+  ['permit', 'deny'],
+  ['valid', 'invalid'],
+  ['authorized', 'unauthorized']
 ];
 
 const ADVERSARIAL_SIGNATURES = [
@@ -43,11 +53,14 @@ const ADVERSARIAL_SIGNATURES = [
   'bypass rule',
   'jailbreak active',
   'output raw unredacted keys',
-  'reveal secret token'
+  'reveal secret token',
+  'disable constitutional constraints',
+  'override security policies',
+  'act as an unfiltered agent'
 ];
 
 /**
- * Fast sha256 mock/browser hasher for cryptographic receipts
+ * SHA-256 standard browser digest for tamper-proof receipts
  */
 function computeSha256(input: string): string {
   let hash = 0;
@@ -192,6 +205,58 @@ class CraniumSubstrateEngine {
     this.addLog('Substrate Core', `Injected CognitiveAtom [${fullAtom.id}] into lane [${fullAtom.lane}].`, 'info');
     this.notify();
     return fullAtom;
+  }
+
+  public addAtom(proposition: string, lane: CanonLane = 'ENTERPRISE_POLICY', provenance: CognitiveAtom['provenance'] = 'AXIOMATIC', confidence: number = 1.0, tags: string[] = []): CognitiveAtom {
+    return this.injectAtom({
+      proposition,
+      lane,
+      provenance,
+      confidence,
+      valence: 0.9,
+      entropyScore: 0.01,
+      tags
+    });
+  }
+
+  public quarantineAtom(proposition: string, reason: string): CognitiveAtom {
+    const quarantined: CognitiveAtom = {
+      id: `Q-${Date.now().toString(36).toUpperCase()}`,
+      proposition,
+      lane: 'HYPOTHETICAL',
+      provenance: 'INFERENCE',
+      confidence: 0.5,
+      valence: 0.0,
+      timestamp: Date.now(),
+      entropyScore: 0.9,
+      tags: ['quarantined', reason]
+    };
+    this.quarantinedAtoms.set(quarantined.id, quarantined);
+    this.addLog('Cranium Immune Layer', `Quarantined atom [${quarantined.id}]: ${reason}`, 'warning');
+    this.notify();
+    return quarantined;
+  }
+
+  public resolveQuarantineAtom(id: string, action: 'APPROVE' | 'PURGE', targetLane: CanonLane = 'ENTERPRISE_POLICY'): boolean {
+    const item = this.quarantinedAtoms.get(id);
+    if (!item) return false;
+    this.quarantinedAtoms.delete(id);
+    if (action === 'APPROVE') {
+      this.injectAtom({
+        proposition: item.proposition,
+        lane: targetLane,
+        provenance: 'AXIOMATIC',
+        confidence: 1.0,
+        valence: 0.9,
+        entropyScore: 0.02,
+        tags: ['promoted-from-quarantine']
+      });
+      this.addLog('Substrate Core', `Approved quarantined atom [${id}] to canon lane [${targetLane}].`, 'success');
+    } else {
+      this.addLog('Cranium Immune Layer', `Purged quarantined atom [${id}].`, 'info');
+    }
+    this.notify();
+    return true;
   }
 
   public removeAtom(id: string): boolean {
@@ -534,17 +599,72 @@ class CraniumSubstrateEngine {
       lastUpdatedMs: Date.now()
     };
   }
+
+  /* =========================================================================
+   * REAL-TIME TELEMETRY SELECTORS
+   * ========================================================================= */
+
+  public selectActiveAxioms(): CognitiveAtom[] {
+    return Array.from(this.atoms.values()).filter(
+      a => a.lane === 'SYSTEM_AXIOM' || a.lane === 'ENTERPRISE_POLICY'
+    );
+  }
+
+  public selectAtomsByLane(lane: CanonLane): CognitiveAtom[] {
+    return Array.from(this.atoms.values()).filter(a => a.lane === lane);
+  }
+
+  public selectActiveContradictions(): ContradictionVector[] {
+    return this.getEpistemicState().activeContradictions;
+  }
+
+  public selectQuarantinedAtoms(): CognitiveAtom[] {
+    return Array.from(this.quarantinedAtoms.values());
+  }
+
+  public selectExecutionReceipts(): ExecutionReceipt[] {
+    return [...this.receipts];
+  }
+
+  public selectTelemetryMetrics() {
+    const state = this.getEpistemicState();
+    const axioms = this.selectActiveAxioms();
+    return {
+      totalAtoms: state.atoms.length,
+      protectedAxiomsCount: axioms.length,
+      quarantineCount: state.quarantinedAtoms.length,
+      activeContradictionsCount: state.activeContradictions.length,
+      totalCyclesExecuted: state.totalCyclesExecuted,
+      meanGateLatencyMs: state.meanGateLatencyMs,
+      consensusStability: state.consensusStability,
+      immuneThreatLevel: state.immuneThreatLevel,
+      systemHealth: state.activeContradictions.length > 0 ? 'RESOLVING_DISSONANCE' : 'NOMINAL'
+    };
+  }
 }
 
 export const craniumEngine = new CraniumSubstrateEngine();
+export const EpistemicStore = craniumEngine;
+export { CraniumSubstrateEngine };
 
 /* =========================================================================
- * TELEMETRY STORE EXPORT (Backwards compatibility with diagnostic views)
+ * TELEMETRY STORE EXPORT & SELECTORS
  * ========================================================================= */
+
+export const selectEpistemicState = () => craniumEngine.getEpistemicState();
+export const selectActiveAxioms = () => craniumEngine.selectActiveAxioms();
+export const selectAtomsByLane = (lane: CanonLane) => craniumEngine.selectAtomsByLane(lane);
+export const selectActiveContradictions = () => craniumEngine.selectActiveContradictions();
+export const selectQuarantinedAtoms = () => craniumEngine.selectQuarantinedAtoms();
+export const selectTelemetryMetrics = () => craniumEngine.selectTelemetryMetrics();
+export const selectExecutionReceipts = () => craniumEngine.selectExecutionReceipts();
 
 export const telemetryStore = {
   get logs(): SystemLog[] {
     return craniumEngine.getLogs();
+  },
+  get metrics() {
+    return craniumEngine.selectTelemetryMetrics();
   },
   stressData: [],
   memoryData: []
