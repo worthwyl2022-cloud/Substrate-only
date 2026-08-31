@@ -1,6 +1,6 @@
 {
-  "name": "CognitiveCore",
-  "description": "Acquisition-grade visualization and control dashboard for the CognitiveCore AI substrate system.",
+  "name": "Cranium Substrate™",
+  "description": "Epistemic governance engine for AI systems. Enforcing identity, canon, intention, and adversarial invariance.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

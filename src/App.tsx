@@ -1,19 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Network, Download } from 'lucide-react';
+import { Network, Download, Briefcase, Zap, Cpu, ShieldAlert, Code2, Layers, CheckCircle2 } from 'lucide-react';
 import { SYSTEM_MODULES } from './data';
 import { ModuleCard } from './components/ModuleCard';
 import { SystemStatus } from './components/SystemStatus';
 import { StressTestView } from './components/StressTestView';
 import { SystemOverview } from './components/SystemOverview';
 import { MemoryUsageView } from './components/MemoryUsageView';
+import { InteractiveGovernancePlayground } from './components/InteractiveGovernancePlayground';
+import { AcquisitionDataRoom } from './components/AcquisitionDataRoom';
+import { MultiTurnStressArena } from './components/MultiTurnStressArena';
+import { KotlinCodeSandbox } from './components/KotlinCodeSandbox';
+import { ResonanceFieldCanvas } from './components/ResonanceFieldCanvas';
+import { HybridContradictionBenchmark } from './components/HybridContradictionBenchmark';
+import { CryptographicReceiptVerifier } from './components/CryptographicReceiptVerifier';
 import { telemetryStore } from './store';
 
 export default function App() {
+  const [mainView, setMainView] = useState<'GOVERNANCE' | 'ARENA' | 'ARCHITECTURE' | 'DATA_ROOM' | 'DIAGNOSTICS'>('GOVERNANCE');
+
   const handleDownloadDiagnostics = () => {
     const payload = {
       timestamp: new Date().toISOString(),
-      system: "CognitiveCore Substrate",
+      system: "Cranium Substrate™",
       status: "NOMINAL",
       activeModules: SYSTEM_MODULES,
       telemetry: {
@@ -27,7 +36,7 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `cognitive-core-diagnostics-${new Date().getTime()}.json`;
+    a.download = `cranium-substrate-diagnostics-${new Date().getTime()}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -36,7 +45,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-200 selection:bg-indigo-500/30 selection:text-indigo-200">
-      {/* Subtle Background Effects */}
+      {/* Background Glow */}
       <div className="fixed inset-0 pointer-events-none flex justify-center overflow-hidden">
         <div className="w-full max-w-7xl relative">
           <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-indigo-500/10 blur-[120px] rounded-full mix-blend-screen" />
@@ -44,99 +53,195 @@ export default function App() {
         </div>
       </div>
 
-      <div className="relative w-full max-w-7xl mx-auto px-6 py-12 md:py-20 lg:px-8">
-        {/* Header / Hero */}
-        <header className="mb-16 md:mb-24 text-center md:text-left flex flex-col md:flex-row justify-between items-center gap-8">
+      <div className="relative w-full max-w-7xl mx-auto px-6 py-8 md:py-12 lg:px-8">
+        {/* Header */}
+        <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-neutral-800/80 pb-6">
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
             className="max-w-2xl"
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-neutral-900 border border-neutral-800 mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-900 border border-neutral-800 mb-3">
               <Network size={14} className="text-indigo-400" />
-              <span className="text-xs font-medium tracking-wide text-neutral-400 uppercase">Tier 1 Acquisition Grade</span>
+              <span className="text-xs font-medium tracking-wide text-neutral-400 uppercase">Tier-3 Epistemic Governance Substrate · 2026</span>
             </div>
-            <h1 className="text-4xl md:text-6xl font-light tracking-tight text-white mb-4">
-              Cognitive<span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-blue-400">Core</span>
+            <h1 className="text-3xl sm:text-4xl font-light tracking-tight text-white mb-2">
+              Cranium <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-blue-300 to-indigo-200">Substrate™</span>
             </h1>
-            <p className="text-lg text-neutral-400 leading-relaxed max-w-xl">
-              The world's first unified cognitive substrate. Seamlessly orchestrating reasoning, memory, and semantic alignment across parallel logic engines.
+            <p className="text-sm sm:text-base text-neutral-400 font-light leading-relaxed max-w-xl">
+              Deterministic epistemic governance above models and below applications. Built by Wyl Mathes.
             </p>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="hidden lg:block w-72 shrink-0"
-          >
-            {/* Abstract visual representation of the core */}
-            <div className="relative aspect-square rounded-full border border-neutral-800/50 flex items-center justify-center p-8">
-              <div className="absolute inset-0 rounded-full border border-indigo-500/20 animate-[spin_60s_linear_infinite]" />
-              <div className="absolute inset-4 rounded-full border border-blue-500/20 animate-[spin_40s_linear_infinite_reverse]" />
-              <div className="absolute inset-8 rounded-full border border-indigo-400/10 animate-[spin_20s_linear_infinite]" />
-              <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-indigo-500 to-blue-500 blur-xl opacity-50 animate-pulse" />
-              <div className="relative w-8 h-8 rounded-full bg-neutral-900 border border-neutral-700 flex items-center justify-center">
-                <div className="w-2 h-2 rounded-full bg-indigo-400" />
-              </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleDownloadDiagnostics}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-300 text-xs font-medium transition-all cursor-pointer"
+            >
+              <Download size={14} className="text-indigo-400" />
+              <span>Export Audit Data</span>
+            </button>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-950/40 border border-emerald-800/40 text-emerald-300 text-xs font-mono">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>0.34ms Substrate Gate Active</span>
             </div>
-          </motion.div>
+          </div>
         </header>
 
+        {/* Global View Nav */}
+        <div className="flex items-center justify-between mb-8 pb-4 border-b border-neutral-800/80 gap-4 overflow-x-auto">
+          <div className="flex items-center gap-2 bg-neutral-900/90 p-1.5 rounded-2xl border border-neutral-800 text-xs font-mono">
+            <button
+              onClick={() => setMainView('GOVERNANCE')}
+              className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                mainView === 'GOVERNANCE'
+                  ? 'bg-indigo-600 text-white font-semibold shadow-md shadow-indigo-600/20'
+                  : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50'
+              }`}
+            >
+              <Zap size={14} /> <span>1. Governance Lab</span>
+            </button>
+            <button
+              onClick={() => setMainView('ARENA')}
+              className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                mainView === 'ARENA'
+                  ? 'bg-indigo-600 text-white font-semibold shadow-md shadow-indigo-600/20'
+                  : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50'
+              }`}
+            >
+              <ShieldAlert size={14} /> <span>2. Adversarial Arena & Cascade</span>
+            </button>
+            <button
+              onClick={() => setMainView('ARCHITECTURE')}
+              className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                mainView === 'ARCHITECTURE'
+                  ? 'bg-indigo-600 text-white font-semibold shadow-md shadow-indigo-600/20'
+                  : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50'
+              }`}
+            >
+              <Code2 size={14} /> <span>3. Kotlin Core & Resonance Field</span>
+            </button>
+            <button
+              onClick={() => setMainView('DATA_ROOM')}
+              className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                mainView === 'DATA_ROOM'
+                  ? 'bg-indigo-600 text-white font-semibold shadow-md shadow-indigo-600/20'
+                  : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50'
+              }`}
+            >
+              <Briefcase size={14} /> <span>4. Technical Data Room</span>
+            </button>
+            <button
+              onClick={() => setMainView('DIAGNOSTICS')}
+              className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                mainView === 'DIAGNOSTICS'
+                  ? 'bg-indigo-600 text-white font-semibold shadow-md shadow-indigo-600/20'
+                  : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50'
+              }`}
+            >
+              <Cpu size={14} /> <span>5. Telemetry & Stress</span>
+            </button>
+          </div>
+
+          <div className="hidden lg:flex items-center gap-3 text-xs font-mono text-neutral-400 shrink-0">
+            <span className="flex items-center gap-1 text-emerald-400">
+              <CheckCircle2 size={14} /> Sub-0.34ms Polarity Gate
+            </span>
+            <span>|</span>
+            <span className="text-neutral-500">Mass: ∞ Canon Isolation</span>
+          </div>
+        </div>
+
         <main className="space-y-12">
-          {/* System Overview */}
-          <section>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-            >
-              <SystemOverview />
-            </motion.div>
-          </section>
-
-          {/* Module Grid */}
-          <section>
-            <div className="flex items-center gap-4 mb-8">
-              <h2 className="text-xl font-medium text-white tracking-tight">Active Architecture</h2>
-              <div className="flex-1 h-px bg-gradient-to-r from-neutral-800 to-transparent" />
+          {/* VIEW 1: GOVERNANCE WORKBENCH */}
+          {mainView === 'GOVERNANCE' && (
+            <div className="space-y-12">
+              <section>
+                <InteractiveGovernancePlayground />
+              </section>
+              <section>
+                <SystemOverview />
+              </section>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {SYSTEM_MODULES.map((module, idx) => (
-                <React.Fragment key={module.id}>
-                  <ModuleCard module={module} index={idx} />
-                </React.Fragment>
-              ))}
-            </div>
-          </section>
+          )}
 
-          {/* Telemetry & Diagnostics */}
-          <section>
-            <div className="flex items-center gap-4 mb-8">
-              <h2 className="text-xl font-medium text-white tracking-tight">Active Diagnostics</h2>
-              <div className="flex-1 h-px bg-gradient-to-r from-neutral-800 to-transparent" />
-              <button
-                onClick={handleDownloadDiagnostics}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-neutral-900 border border-neutral-700 hover:border-neutral-600 hover:bg-neutral-800 transition-all text-sm font-medium text-neutral-300 shrink-0 cursor-pointer shadow-sm"
-              >
-                <Download size={16} className="text-neutral-400" />
-                <span>Download Diagnostics</span>
-              </button>
+          {/* VIEW 2: ADVERSARIAL ARENA & CASCADE */}
+          {mainView === 'ARENA' && (
+            <div className="space-y-12">
+              <section>
+                <MultiTurnStressArena />
+              </section>
+              <section>
+                <HybridContradictionBenchmark />
+              </section>
             </div>
+          )}
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.8 }}
-              className="grid grid-cols-1 lg:grid-cols-3 gap-6"
-            >
-               <SystemStatus />
-               <StressTestView />
-               <MemoryUsageView />
-            </motion.div>
-          </section>
+          {/* VIEW 3: KOTLIN ARCHITECTURE & RESONANCE FIELD */}
+          {mainView === 'ARCHITECTURE' && (
+            <div className="space-y-12">
+              <section>
+                <ResonanceFieldCanvas />
+              </section>
+              <section>
+                <KotlinCodeSandbox />
+              </section>
+              <section>
+                <CryptographicReceiptVerifier />
+              </section>
+            </div>
+          )}
+
+          {/* VIEW 4: TECHNICAL ACQUISITION DATA ROOM */}
+          {mainView === 'DATA_ROOM' && (
+            <div className="space-y-12">
+              <section>
+                <AcquisitionDataRoom />
+              </section>
+            </div>
+          )}
+
+          {/* VIEW 5: ARCHITECTURE & TELEMETRY */}
+          {mainView === 'DIAGNOSTICS' && (
+            <div className="space-y-12">
+              {/* Architecture Modules */}
+              <section>
+                <div className="flex items-center gap-4 mb-6">
+                  <h2 className="text-lg font-medium text-white tracking-tight">Active Substrate Architecture</h2>
+                  <div className="flex-1 h-px bg-neutral-800" />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {SYSTEM_MODULES.map((module, idx) => (
+                    <React.Fragment key={module.id}>
+                      <ModuleCard module={module} index={idx} />
+                    </React.Fragment>
+                  ))}
+                </div>
+              </section>
+
+              {/* Telemetry & Stress Diagnostics */}
+              <section>
+                <div className="flex items-center gap-4 mb-6">
+                  <h2 className="text-lg font-medium text-white tracking-tight">Active Telemetry & Stress Diagnostics</h2>
+                  <div className="flex-1 h-px bg-neutral-800" />
+                  <button
+                    onClick={handleDownloadDiagnostics}
+                    className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-neutral-900 border border-neutral-700 hover:bg-neutral-800 text-xs font-medium text-neutral-300 cursor-pointer"
+                  >
+                    <Download size={14} className="text-neutral-400" />
+                    <span>Export Diagnostics</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <SystemStatus />
+                  <StressTestView />
+                  <MemoryUsageView />
+                </div>
+              </section>
+            </div>
+          )}
         </main>
       </div>
     </div>
