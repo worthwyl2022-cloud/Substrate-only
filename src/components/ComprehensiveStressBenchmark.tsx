@@ -94,7 +94,7 @@ export function ComprehensiveStressBenchmark() {
     let totalLatency = 0;
     let falsePositives = 0;
 
-    Object.entries(executionResults).forEach(([id, res]) => {
+    (Object.entries(executionResults) as Array<[string, BenchmarkExecutionResult]>).forEach(([id, res]) => {
       const test = COMPREHENSIVE_BENCHMARK_SUITE.find(t => t.id === id);
       if (!test) return;
 
