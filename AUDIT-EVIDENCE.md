@@ -2,7 +2,7 @@
 
 ## Snapshot
 
-- Repository: `worthwyl2022-cloud/Substrate-only`
+- Repository: `worthwyl2022-cloud/cranium-substrate-simulator`
 - Default working branch observed: `main`
 - Commit count at inventory: `11`
 - Files at inventory: `47`
