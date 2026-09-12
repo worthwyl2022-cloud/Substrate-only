@@ -83,7 +83,7 @@ export function CryptographicReceiptVerifier() {
       merkleRoot: selectedReceipt.merkleRoot,
       canonSignature: selectedReceipt.canonSignature,
       directive: selectedReceipt.directiveAction,
-      verificationStatus: "CRYPTOGRAPHICALLY_VERIFIED_NOMINAL",
+      verificationStatus: "NON_CANONICAL_LOCAL_RESULT",
       proofEngine: "SHA-256 Merkle Proof v2.4 (Kotlin SubstrateCore)"
     };
 
